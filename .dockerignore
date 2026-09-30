@@ -1,0 +1,10 @@
+.git
+.github
+.venv
+**/__pycache__
+*.sqlite3
+.env
+staticfiles
+media
+.pytest_cache
+*.zip

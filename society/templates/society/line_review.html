@@ -1,0 +1,25 @@
+{% extends 'society/base.html' %}{% load money %}
+{% block title %}Review {{ line.display_code }}{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Review variable line {{ line.display_code }}</h1><div class="muted small">Bill {{ line.bill.bill_no }} · Unit {{ line.bill.flat.unit_no }} · {{ line.charge_head.name }}</div></div>
+<a class="btn" href="{% url 'bill_detail' line.bill_id %}">Back to bill</a></div>
+<div class="card" style="max-width:560px">
+  <div class="note small">Amount = quantity × rate, computed on the server. Confirming records your user and time in the audit log. Confirm 0 quantity if the charge does not apply this period.</div>
+  <p>Draft: {{ line.quantity }} × {{ line.rate|inr }} = <strong>₹ {{ line.amount|inr }}</strong>{% if line.confirmed %} <span class="badge ok">Confirmed</span>{% endif %}</p>
+  <form method="post">{% csrf_token %}
+    <div class="form-grid">
+      <div class="field"><label for="id_quantity">Quantity</label>{{ form.quantity }}{{ form.quantity.errors }}</div>
+      <div class="field"><label for="id_rate">Rate (₹)</label>{{ form.rate }}{{ form.rate.errors }}</div>
+    </div>
+    <p>New amount: <strong id="preview">—</strong></p>
+    <div class="actions"><button class="btn primary" name="next" value="0">Confirm</button><button class="btn" name="next" value="1">Confirm &amp; next pending line</button></div>
+  </form>
+</div>
+{% endblock %}
+{% block scripts %}<script>
+(function () {
+  var q = document.getElementById('id_quantity'), r = document.getElementById('id_rate'), out = document.getElementById('preview');
+  function upd() { var v = (parseFloat(q.value) || 0) * (parseFloat(r.value) || 0); out.textContent = '₹ ' + v.toFixed(2); }
+  q.addEventListener('input', upd); r.addEventListener('input', upd); upd(); q.focus(); q.select();
+})();
+</script>{% endblock %}

@@ -1,0 +1,26 @@
+{% extends 'society/base.html' %}{% load money %}
+{% block title %}Billing periods{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Billing periods</h1><div class="muted small">Draft → Generated → Review → Approved (bills issued) → Locked. {% if active_society.enforce_maker_checker %}Maker-checker is on: the user who generates cannot approve.{% endif %}</div></div>
+{% if perms_can|get_item:'billing.prepare' %}<a class="btn primary" href="{% url 'period_create' %}">New period</a>{% endif %}</div>
+<div class="card table-wrap"><table>
+  <thead><tr><th>Period</th><th>Dates</th><th>Bill / due</th><th>Interest</th><th>Status</th><th>Maker / checker</th><th>Actions</th></tr></thead>
+  <tbody>{% for p in periods %}
+  <tr>
+    <td><a href="{% url 'bill_list' %}?period={{ p.pk }}"><strong>{{ p.name }}</strong></a></td>
+    <td class="nowrap">{{ p.period_start|date:"d-m-Y" }} – {{ p.period_end|date:"d-m-Y" }}</td>
+    <td class="nowrap">{{ p.bill_date|date:"d-m-Y" }} / {{ p.due_date|date:"d-m-Y" }}</td>
+    <td class="small">{% if p.interest_calculation_date %}{{ p.interest_rate_pa }}% p.a. to {{ p.interest_calculation_date|date:"d-m-Y" }}{% else %}<span class="muted">No interest run</span>{% endif %}{% if p.interest_resolution_reference %}<br><span class="muted">{{ p.interest_resolution_reference }}</span>{% endif %}</td>
+    <td><span class="badge {% if p.status == 'locked' or p.status == 'approved' %}ok{% elif p.status == 'review' %}info{% elif p.status == 'generated' %}warn{% endif %}">{{ p.get_status_display }}</span></td>
+    <td class="small">{% if p.generated_by %}Generated: {{ p.generated_by }} {{ p.generated_at|date:"d-m-Y H:i" }}<br>{% endif %}{% if p.submitted_by %}Submitted: {{ p.submitted_by }}<br>{% endif %}{% if p.approved_by %}Approved: {{ p.approved_by }} {{ p.approved_at|date:"d-m-Y H:i" }}<br>{% endif %}{% if p.locked_at %}Locked: {{ p.locked_by }} {{ p.locked_at|date:"d-m-Y H:i" }}{% endif %}</td>
+    <td class="actions">
+      {% if perms_can|get_item:'billing.prepare' and p.status in 'draft,generated,review' %}<form class="inline" method="post" action="{% url 'period_generate' p.pk %}">{% csrf_token %}<button class="btn small">Generate drafts</button></form>{% endif %}
+      {% if perms_can|get_item:'billing.prepare' and p.status == 'generated' %}<a class="btn small" href="{% url 'bill_list' %}?period={{ p.pk }}&review=1">Review variable lines</a><form class="inline" method="post" action="{% url 'period_submit' p.pk %}">{% csrf_token %}<button class="btn small">Submit for review</button></form>{% endif %}
+      {% if perms_can|get_item:'billing.approve' and p.status == 'review' %}<form class="inline" method="post" action="{% url 'period_approve' p.pk %}">{% csrf_token %}<button class="btn small primary" onclick="return confirm('Approve {{ p.name }} and issue all draft bills?')">Approve &amp; issue</button></form>{% endif %}
+      {% if perms_can|get_item:'billing.approve' and p.status == 'approved' %}<form class="inline" method="post" action="{% url 'period_lock' p.pk %}">{% csrf_token %}<button class="btn small" onclick="return confirm('Lock {{ p.name }}? Bills in a locked period cannot be issued or cancelled.')">Lock</button></form>{% endif %}
+      <a class="btn small" href="{% url 'bill_register' %}?period={{ p.pk }}">Register</a>
+    </td>
+  </tr>
+  {% empty %}<tr><td colspan="7" class="muted">No billing periods.</td></tr>{% endfor %}</tbody>
+</table></div>
+{% endblock %}

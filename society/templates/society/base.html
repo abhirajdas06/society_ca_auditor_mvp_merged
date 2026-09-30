@@ -1,0 +1,61 @@
+{% load static money %}<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}{{ title|default:"Society CA" }}{% endblock %} · {{ active_society.name|default:"Society CA" }}</title>
+<link rel="stylesheet" href="{% static 'society/css/app.css' %}">
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="{% url 'dashboard' %}">Society CA</a>
+  {% if switchable_societies|length > 1 %}
+  <form method="post" action="{% url 'switch_society' %}" class="inline">{% csrf_token %}
+    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+    <select name="society" onchange="this.form.submit()" aria-label="Active society">
+      {% for s in switchable_societies %}<option value="{{ s.pk }}" {% if s.pk == active_society.pk %}selected{% endif %}>{{ s.name|truncatechars:48 }}</option>{% endfor %}
+    </select>
+  </form>
+  {% else %}<span class="small">{{ active_society.name|truncatechars:60 }}</span>{% endif %}
+  <span class="spacer"></span>
+  <span class="who">{{ request.user.username }} {% if role_label %}<span class="role-pill">{{ role_label }}</span>{% endif %}</span>
+  <form method="post" action="{% url 'logout' %}" class="inline">{% csrf_token %}<button class="btn small">Logout</button></form>
+</header>
+<div class="shell">
+<nav class="sidebar" aria-label="Main">
+  {% with u=request.resolver_match.url_name %}
+  <div class="sec">Workspace</div>
+  {% if switchable_societies|length > 1 %}<a href="{% url 'portfolio' %}" class="{% if u == 'portfolio' %}active{% endif %}">My societies ({{ switchable_societies|length }})</a>{% endif %}
+  <a href="{% url 'dashboard' %}" class="{% if u == 'dashboard' %}active{% endif %}">Dashboard</a>
+  <a href="{% url 'receipt_list' %}" class="{% if u == 'receipt_list' %}active{% endif %}">Receipts</a>
+  {% if perms_can|get_item:'receipt.create' %}<a href="{% url 'receipt_create' %}" accesskey="r">+ New receipt</a>{% endif %}
+  <a href="{% url 'bill_list' %}" class="{% if u == 'bill_list' %}active{% endif %}">Bills</a>
+  <a href="{% url 'period_list' %}" class="{% if u == 'period_list' %}active{% endif %}">Billing periods</a>
+  <div class="sec">Masters</div>
+  <a href="{% url 'flat_list' %}" class="{% if u == 'flat_list' %}active{% endif %}">Flats</a>
+  <a href="{% url 'member_list' %}" class="{% if u == 'member_list' %}active{% endif %}">Members</a>
+  <a href="{% url 'charge_head_list' %}" class="{% if u == 'charge_head_list' %}active{% endif %}">Charge heads</a>
+  <a href="{% url 'charge_rule_list' %}" class="{% if u == 'charge_rule_list' %}active{% endif %}">Charge rules</a>
+  <div class="sec">Reports</div>
+  <a href="{% url 'bill_register' %}" class="{% if u == 'bill_register' %}active{% endif %}">Bill register</a>
+  <a href="{% url 'collection_sheet' %}" class="{% if u == 'collection_sheet' %}active{% endif %}">Collection sheet</a>
+  <a href="{% url 'receipt_register' %}" class="{% if u == 'receipt_register' %}active{% endif %}">Receipt register</a>
+  <a href="{% url 'outstanding_report' %}" class="{% if u == 'outstanding_report' %}active{% endif %}">Outstanding by flat</a>
+  <a href="{% url 'advance_report' %}" class="{% if u == 'advance_report' %}active{% endif %}">Advance / unapplied</a>
+  <a href="{% url 'charge_head_summary' %}" class="{% if u == 'charge_head_summary' %}active{% endif %}">Charge-head summary</a>
+  <div class="sec">Control</div>
+  {% if perms_can|get_item:'audit.view' %}<a href="{% url 'audit_log' %}" class="{% if u == 'audit_log' %}active{% endif %}">Audit log</a>{% endif %}
+  {% if perms_can|get_item:'import.run' %}<a href="{% url 'import_list' %}" class="{% if u == 'import_list' %}active{% endif %}">Data import</a>{% endif %}
+  {% if perms_can|get_item:'config.edit' %}<a href="{% url 'society_edit' %}" class="{% if u == 'society_edit' %}active{% endif %}">Society settings</a>{% endif %}
+  {% if request.user.is_superuser %}<a href="/admin/">Django admin</a>{% endif %}
+  {% endwith %}
+</nav>
+<main class="main">
+  {% for message in messages %}<div class="msg {{ message.tags }}" role="status">{{ message }}</div>{% endfor %}
+  {% block content %}{% endblock %}
+</main>
+</div>
+<script src="{% static 'society/js/dependent.js' %}" defer></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

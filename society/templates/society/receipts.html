@@ -1,0 +1,21 @@
+{% extends 'society/base.html' %}{% load money %}
+{% block title %}Receipts{% endblock %}
+{% block content %}
+<div class="page-head"><h1>Receipts</h1>{% if perms_can|get_item:'receipt.create' %}<a class="btn primary" href="{% url 'receipt_create' %}">Record receipt</a>{% endif %}</div>
+<form class="filters" method="get">
+  <div><label for="q">Receipt / unit / cheque / UTR</label><input id="q" name="q" value="{{ q }}" autofocus></div>
+  {% include 'society/_flat_filter.html' %}
+  <div><label for="status">Status</label><select id="status" name="status"><option value="">All</option>{% for v, l in statuses %}<option value="{{ v }}" {% if status == v %}selected{% endif %}>{{ l }}</option>{% endfor %}</select></div>
+  <button class="btn">Filter</button>
+</form>
+<div class="card table-wrap"><table>
+  <thead><tr><th>Receipt</th><th>Date</th><th>Unit</th><th>Mode</th><th>Cheque / UTR</th><th class="num">Receipt amount</th><th class="num">Allocated</th><th class="num">Advance</th><th>Status</th></tr></thead>
+  <tbody>{% for r in page %}
+    <tr class="{% if not r.is_effective %}ineffective{% endif %}"><td><a href="{% url 'receipt_detail' r.pk %}"><strong>{{ r.receipt_no }}</strong></a></td><td class="nowrap">{{ r.receipt_date|date:"d-m-Y" }}</td><td>{{ r.flat.unit_no }}</td>
+      <td>{{ r.get_payment_mode_display }}</td><td>{{ r.cheque_no|default:r.transaction_ref }}</td>
+      <td class="num">{{ r.amount|inr }}</td><td class="num">{{ r.allocated_amount|inr }}</td><td class="num">{{ r.unallocated_amount|inr }}</td><td>{% include 'society/_receipt_status.html' %}</td></tr>
+  {% empty %}<tr><td colspan="9" class="muted">No receipts.</td></tr>{% endfor %}</tbody>
+</table>
+{% include 'society/_pagination.html' %}
+</div>
+{% endblock %}

@@ -1,0 +1,14 @@
+{% extends 'society/base.html' %}{% load money %}
+{% block title %}Advance / unapplied register{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Advance / Unapplied Register</h1><div class="muted small">Advance = receipt amount − effective allocations. Each advance stays linked to its receipt until allocated.</div></div></div>
+<div class="card table-wrap"><table>
+  <thead><tr><th>Receipt</th><th>Date</th><th>Unit</th><th>Payer</th><th>Status</th><th class="num">Receipt Amount</th><th class="num">Allocated</th><th class="num">Advance</th><th class="no-print"></th></tr></thead>
+  <tbody>{% for row in rows %}{% with r=row.receipt %}
+    <tr><td><a href="{% url 'receipt_detail' r.pk %}">{{ r.receipt_no }}</a></td><td class="nowrap">{{ r.receipt_date|date:"d-m-Y" }}</td><td>{{ r.flat.unit_no }}</td><td class="small">{{ r.member.full_name|default:"" }}</td><td>{% include 'society/_receipt_status.html' %}</td>
+      <td class="num">{{ r.amount|inr }}</td><td class="num">{{ row.allocated|inr }}</td><td class="num"><strong>{{ row.advance|inr }}</strong></td>
+      <td class="no-print">{% if perms_can|get_item:'allocation.apply' %}<a href="{% url 'receipt_allocate' r.pk %}">Allocate</a>{% endif %}</td></tr>
+  {% endwith %}{% empty %}<tr><td colspan="9" class="muted">No unapplied receipts.</td></tr>{% endfor %}</tbody>
+  <tfoot><tr><td colspan="7">Total advance</td><td class="num">{{ total|inr }}</td><td></td></tr></tfoot>
+</table></div>
+{% endblock %}

@@ -1,0 +1,62 @@
+from django.urls import path
+
+from . import views
+
+urlpatterns = [
+    path("", views.dashboard, name="dashboard"),
+    path("healthz/", views.health, name="health"),
+    path("societies/", views.portfolio, name="portfolio"),
+    path("switch-society/", views.switch_society, name="switch_society"),
+    path("society/", views.society_edit, name="society_edit"),
+    # masters
+    path("flats/", views.flat_list, name="flat_list"),
+    path("flats/new/", views.flat_create, name="flat_create"),
+    path("flats/<int:pk>/edit/", views.flat_edit, name="flat_edit"),
+    path("flats/link-member/", views.flat_member_create, name="flat_member_create"),
+    path("wings/new/", views.wing_create, name="wing_create"),
+    path("members/", views.member_list, name="member_list"),
+    path("members/new/", views.member_create, name="member_create"),
+    path("members/<int:pk>/edit/", views.member_edit, name="member_edit"),
+    path("charge-heads/", views.charge_head_list, name="charge_head_list"),
+    path("charge-heads/new/", views.charge_head_create, name="charge_head_create"),
+    path("charge-heads/<int:pk>/edit/", views.charge_head_edit, name="charge_head_edit"),
+    path("charge-rules/", views.charge_rule_list, name="charge_rule_list"),
+    path("charge-rules/new/", views.charge_rule_create, name="charge_rule_create"),
+    path("charge-rules/<int:pk>/edit/", views.charge_rule_edit, name="charge_rule_edit"),
+    # billing
+    path("billing-periods/", views.period_list, name="period_list"),
+    path("billing-periods/new/", views.period_create, name="period_create"),
+    path("billing-periods/<int:pk>/generate/", views.period_generate, name="period_generate"),
+    path("billing-periods/<int:pk>/submit/", views.period_submit, name="period_submit"),
+    path("billing-periods/<int:pk>/approve/", views.period_approve, name="period_approve"),
+    path("billing-periods/<int:pk>/lock/", views.period_lock, name="period_lock"),
+    path("bills/", views.bill_list, name="bill_list"),
+    path("bills/<int:pk>/", views.bill_detail, name="bill_detail"),
+    path("bills/<int:pk>/issue/", views.bill_issue, name="bill_issue"),
+    path("bills/<int:pk>/cancel/", views.bill_cancel, name="bill_cancel"),
+    path("bill-lines/<int:pk>/review/", views.bill_line_review, name="bill_line_review"),
+    # receipts
+    path("receipts/", views.receipt_list, name="receipt_list"),
+    path("receipts/new/", views.receipt_create, name="receipt_create"),
+    path("receipts/<int:pk>/", views.receipt_detail, name="receipt_detail"),
+    path("receipts/<int:pk>/allocate/", views.receipt_allocate, name="receipt_allocate"),
+    path("receipts/<int:pk>/reallocate/", views.receipt_reallocate, name="receipt_reallocate"),
+    path("receipts/<int:pk>/auto-allocate/", views.receipt_auto_allocate, name="receipt_auto_allocate"),
+    path("receipts/<int:pk>/clear/", views.receipt_clear, name="receipt_clear"),
+    path("receipts/<int:pk>/bounce/", views.receipt_bounce, name="receipt_bounce"),
+    path("receipts/<int:pk>/cancel/", views.receipt_cancel, name="receipt_cancel"),
+    path("receipt-allocations/<int:pk>/reverse/", views.allocation_reverse, name="allocation_reverse"),
+    path("api/flats/<int:flat_id>/receivables/", views.receivable_lines_api, name="receivable_lines_api"),
+    # reports
+    path("reports/bill-register/", views.bill_register, name="bill_register"),
+    path("reports/collection/", views.collection_sheet, name="collection_sheet"),
+    path("reports/receipt-register/", views.receipt_register, name="receipt_register"),
+    path("reports/outstanding/", views.outstanding_report, name="outstanding_report"),
+    path("reports/advances/", views.advance_report, name="advance_report"),
+    path("reports/charge-heads/", views.charge_head_summary, name="charge_head_summary"),
+    path("reports/flat/<int:flat_id>/statement/", views.flat_statement, name="flat_statement"),
+    path("audit-log/", views.audit_log, name="audit_log"),
+    # import
+    path("imports/", views.import_list, name="import_list"),
+    path("imports/<int:pk>/", views.import_detail, name="import_detail"),
+]

@@ -1,0 +1,18 @@
+{% extends 'society/base.html' %}{% load money %}
+{% block title %}Charge rules{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Flat charge rules</h1><div class="muted small">Effective-dated. Bill generation uses the single rule effective on the period start date; future and expired rules are never used.</div></div>
+{% if perms_can|get_item:'config.edit' %}<a class="btn primary" href="{% url 'charge_rule_create' %}">Add rule</a>{% endif %}</div>
+<form class="filters" method="get">{% include 'society/_flat_filter.html' %}<button class="btn">Filter</button></form>
+<div class="card table-wrap"><table>
+  <thead><tr><th>Unit</th><th>Head</th><th>Type</th><th class="num">Fixed amount</th><th class="num">Qty</th><th class="num">Rate</th><th>From</th><th>To</th><th>Resolution</th><th>Active</th><th></th></tr></thead>
+  <tbody>{% for r in rules %}
+    <tr class="{% if not r.active %}dim{% endif %}"><td>{{ r.flat.unit_no }}</td><td>{{ r.charge_head.name }}</td><td>{{ r.charge_head.get_charge_type_display }}</td>
+      <td class="num">{% if r.charge_head.charge_type == 'fixed' %}{{ r.configured_amount|inr }}{% else %}—{% endif %}</td>
+      <td class="num">{% if r.charge_head.charge_type == 'variable' %}{{ r.default_quantity }}{% else %}—{% endif %}</td>
+      <td class="num">{% if r.charge_head.charge_type == 'variable' %}{{ r.default_rate|inr }}{% else %}—{% endif %}</td>
+      <td class="nowrap">{{ r.effective_from|date:"d-m-Y" }}</td><td class="nowrap">{{ r.effective_to|date:"d-m-Y"|default:"open" }}</td><td>{{ r.resolution_reference }}</td>
+      <td>{% if r.active %}Yes{% else %}No{% endif %}</td><td>{% if perms_can|get_item:'config.edit' %}<a href="{% url 'charge_rule_edit' r.pk %}">Edit</a>{% endif %}</td></tr>
+  {% empty %}<tr><td colspan="11" class="muted">No rules.</td></tr>{% endfor %}</tbody>
+</table></div>
+{% endblock %}

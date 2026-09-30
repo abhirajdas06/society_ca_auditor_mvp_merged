@@ -1,0 +1,74 @@
+{% extends 'society/base.html' %}{% load money %}
+{% block title %}Receipt {{ receipt.receipt_no }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><h1>Receipt {{ receipt.receipt_no }} {% with r=receipt %}{% include 'society/_receipt_status.html' %}{% endwith %}</h1>
+    <div class="muted small">Unit <a href="{% url 'flat_statement' receipt.flat_id %}">{{ receipt.flat.unit_no }}</a> · {{ receipt.member.full_name|default:"payer not recorded" }} · {{ receipt.receipt_date|date:"d-m-Y" }}</div></div>
+  <div class="actions no-print">
+    {% if receipt.is_effective %}
+      {% if perms_can|get_item:'allocation.apply' and receipt.unallocated_amount > 0 %}<a class="btn primary" href="{% url 'receipt_allocate' receipt.pk %}">Allocate advance</a>{% endif %}
+      {% if perms_can|get_item:'allocation.correct' %}<a class="btn" href="{% url 'receipt_reallocate' receipt.pk %}">Reallocate</a>{% endif %}
+    {% endif %}
+    {% if receipt.status == 'received' %}
+      {% if perms_can|get_item:'receipt.clear' %}<form class="inline" method="post" action="{% url 'receipt_clear' receipt.pk %}">{% csrf_token %}<button class="btn">Mark cleared</button></form>{% endif %}
+    {% endif %}
+  </div>
+</div>
+<div class="grid side">
+  <div>
+    <div class="card">
+      <h2>Allocation history <span class="muted small">(append-only)</span></h2>
+      <div class="table-wrap"><table>
+        <thead><tr><th>#</th><th>Component</th><th>Bill</th><th>Mode</th><th class="num">Allocated</th><th class="num">Reversed</th><th class="num">Effective</th><th>By / when</th><th class="no-print"></th></tr></thead>
+        <tbody>{% for a in allocations %}
+          <tr class="{% if not receipt.is_effective %}ineffective{% endif %}"><td>{{ a.pk }}</td><td class="mono">{{ a.bill_line.display_code }}</td><td><a href="{% url 'bill_detail' a.bill_line.bill_id %}">{{ a.bill_line.bill.bill_no }}</a></td>
+            <td>{{ a.get_mode_display }}{% if a.note %}<div class="muted small">{{ a.note }}</div>{% endif %}</td>
+            <td class="num">{{ a.amount|inr }}</td><td class="num">{{ a.reversed_amount|inr }}</td><td class="num"><strong>{{ a.effective_amount|inr }}</strong></td>
+            <td class="small">{{ a.created_by }}<br>{{ a.created_at|date:"d-m-Y H:i" }}</td>
+            <td class="no-print">{% if receipt.is_effective and perms_can|get_item:'allocation.correct' and a.effective_amount > 0 %}
+              <form class="inline" method="post" action="{% url 'allocation_reverse' a.pk %}">{% csrf_token %}<input name="amount" type="number" step="0.01" min="0.01" max="{{ a.effective_amount }}" value="{{ a.effective_amount }}" style="width:7rem" aria-label="Reverse amount"><input name="reason" placeholder="Reason" required style="width:9rem"><button class="btn small danger">Reverse</button></form>{% endif %}</td></tr>
+          {% for rv in a.reversals.all %}<tr class="dim"><td></td><td colspan="4" class="small">↳ Reversal #{{ rv.pk }}: {{ rv.reason }}</td><td class="num">{{ rv.amount|inr }}</td><td></td><td class="small">{{ rv.created_by }}<br>{{ rv.created_at|date:"d-m-Y H:i" }}</td><td></td></tr>{% endfor %}
+        {% empty %}<tr><td colspan="9" class="muted">Not allocated. The full amount is advance / unapplied.</td></tr>{% endfor %}</tbody>
+      </table></div>
+      {% if not receipt.is_effective %}<p class="small muted">This receipt is {{ receipt.get_status_display|lower }}: its allocations are kept for history but no longer count as paid.</p>{% endif %}
+    </div>
+    <div class="card">
+      <h2>Status history</h2>
+      <table><tbody>{% for h in history %}<tr><td class="nowrap small">{{ h.created_at|date:"d-m-Y H:i" }}</td><td>{{ h.action }}</td><td class="small">{{ h.user|default:"system" }}</td><td class="small">{{ h.details.reason|default:"" }}</td></tr>{% endfor %}</tbody></table>
+    </div>
+  </div>
+  <div>
+    <div class="card">
+      <h2>Money</h2>
+      <div class="kv"><span>Receipt amount</span><strong>₹ {{ receipt.amount|inr }}</strong></div>
+      <div class="kv"><span>Allocated (effective)</span><strong>{{ receipt.allocated_amount|inr }}</strong></div>
+      <div class="kv total"><span>Advance / unapplied</span><strong>₹ {{ receipt.unallocated_amount|inr }}</strong></div>
+      {% if receipt.is_effective and receipt.unallocated_amount > 0 and perms_can|get_item:'allocation.apply' %}
+      <form method="post" action="{% url 'receipt_auto_allocate' receipt.pk %}" class="inline no-print" style="margin-top:.6rem">{% csrf_token %}
+        <select name="policy" aria-label="Automatic policy">{% for v, l in policies %}<option value="{{ v }}" {% if v == receipt.society.allocation_policy %}selected{% endif %}>{{ l }}</option>{% endfor %}</select>
+        <button class="btn small">Auto-apply advance</button>
+      </form>{% endif %}
+    </div>
+    <div class="card">
+      <h2>Payment details</h2>
+      <div class="kv"><span>Mode</span><span>{{ receipt.get_payment_mode_display }}</span></div>
+      {% if receipt.cheque_no %}<div class="kv"><span>Cheque no. / date</span><span>{{ receipt.cheque_no }} / {{ receipt.cheque_date|date:"d-m-Y"|default:"—" }}</span></div>{% endif %}
+      {% if receipt.bank_name %}<div class="kv"><span>Bank / branch</span><span>{{ receipt.bank_name }} {{ receipt.bank_branch }}</span></div>{% endif %}
+      {% if receipt.transaction_ref %}<div class="kv"><span>UTR / ref</span><span class="mono">{{ receipt.transaction_ref }}</span></div>{% endif %}
+      {% if receipt.narration %}<div class="kv"><span>Narration</span><span>{{ receipt.narration }}</span></div>{% endif %}
+      {% if receipt.allocation_instruction %}<div class="kv"><span>Payer instruction</span><span>{{ receipt.allocation_instruction }}</span></div>{% endif %}
+      <div class="kv"><span>Created</span><span class="small">{{ receipt.created_by }} {{ receipt.created_at|date:"d-m-Y H:i" }}</span></div>
+      {% if receipt.cleared_at %}<div class="kv"><span>Cleared</span><span class="small">{{ receipt.cleared_by }} {{ receipt.cleared_at|date:"d-m-Y H:i" }}</span></div>{% endif %}
+      {% if receipt.bounced_at %}<div class="kv"><span>Bounced</span><span class="small">{{ receipt.bounced_by }} {{ receipt.bounced_at|date:"d-m-Y H:i" }} — {{ receipt.status_reason }}</span></div>{% endif %}
+      {% if receipt.cancelled_at %}<div class="kv"><span>Cancelled</span><span class="small">{{ receipt.cancelled_by }} {{ receipt.cancelled_at|date:"d-m-Y H:i" }} — {{ receipt.status_reason }}</span></div>{% endif %}
+    </div>
+    {% if receipt.status == 'received' %}
+    <div class="card no-print">
+      <h2>Exceptions</h2>
+      {% if perms_can|get_item:'receipt.bounce' %}<form method="post" action="{% url 'receipt_bounce' receipt.pk %}" class="field">{% csrf_token %}<label for="bounce-reason">Mark bounced</label><div class="actions"><input id="bounce-reason" name="reason" placeholder="Bank return reason" required><button class="btn danger" onclick="return confirm('Mark this receipt bounced?')">Bounce</button></div></form>{% endif %}
+      {% if perms_can|get_item:'receipt.cancel' %}<form method="post" action="{% url 'receipt_cancel' receipt.pk %}" class="field">{% csrf_token %}<label for="cancel-reason">Cancel receipt</label><div class="actions"><input id="cancel-reason" name="reason" placeholder="Reason" required><button class="btn danger" onclick="return confirm('Cancel this receipt?')">Cancel</button></div></form>{% endif %}
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

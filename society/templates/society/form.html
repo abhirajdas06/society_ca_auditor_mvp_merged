@@ -1,0 +1,23 @@
+{% extends 'society/base.html' %}
+{% block content %}
+<div class="page-head"><h1>{{ title }}</h1>{% if back_url %}<a class="btn" href="{{ back_url }}">Back</a>{% endif %}</div>
+<div class="card" style="max-width:980px">
+  <form method="post" novalidate>{% csrf_token %}
+    {% if form.non_field_errors %}<div class="msg error">{{ form.non_field_errors|join:" " }}</div>{% endif %}
+    <div class="form-grid">
+    {% for field in form %}
+      <div class="field">
+        {% if field.field.widget.input_type == 'checkbox' %}
+          <label>{{ field }} {{ field.label }}</label>
+        {% else %}
+          <label for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %} *{% endif %}</label>{{ field }}
+        {% endif %}
+        {% if field.help_text %}<div class="help">{{ field.help_text }}</div>{% endif %}
+        {% if field.errors %}<ul class="errorlist">{% for e in field.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+      </div>
+    {% endfor %}
+    </div>
+    <div class="actions"><button class="btn primary">Save</button>{% if back_url %}<a class="btn" href="{{ back_url }}">Cancel</a>{% endif %}</div>
+  </form>
+</div>
+{% endblock %}

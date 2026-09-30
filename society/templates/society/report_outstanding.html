@@ -1,0 +1,15 @@
+{% extends 'society/base.html' %}{% load money %}
+{% block title %}Outstanding by flat{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Outstanding by Flat</h1><div class="muted small">Issued components only. Advance is shown separately and is not netted against the balance until it is allocated.</div></div>
+<div class="actions no-print"><a class="btn" href="?format=csv">Export CSV</a><button class="btn" onclick="window.print()">Print</button></div></div>
+<div class="card table-wrap"><table>
+  <thead><tr><th>Unit</th><th>Member</th><th class="num">Payable</th><th class="num">Paid</th><th class="num">Principal bal.</th><th class="num">Interest bal.</th><th class="num">Balance</th><th class="num">Overdue</th><th class="num">Advance</th><th class="no-print"></th></tr></thead>
+  <tbody>{% for r in rows %}
+    <tr><td><strong>{{ r.flat.unit_no }}</strong></td><td class="small">{{ r.flat.member_display }}</td><td class="num">{{ r.payable|inr }}</td><td class="num">{{ r.paid|inr }}</td>
+      <td class="num">{{ r.principal|inr }}</td><td class="num">{{ r.interest|inr }}</td><td class="num"><strong>{{ r.balance|inr }}</strong></td><td class="num">{{ r.overdue|inr }}</td><td class="num">{{ r.advance|inr }}</td>
+      <td class="no-print"><a href="{% url 'flat_statement' r.flat.pk %}">Statement</a></td></tr>
+  {% empty %}<tr><td colspan="10" class="muted">Nothing outstanding.</td></tr>{% endfor %}</tbody>
+  <tfoot><tr><td colspan="2">Total</td><td class="num">{{ totals.payable|inr }}</td><td class="num">{{ totals.paid|inr }}</td><td class="num">{{ totals.principal|inr }}</td><td class="num">{{ totals.interest|inr }}</td><td class="num">{{ totals.balance|inr }}</td><td class="num">{{ totals.overdue|inr }}</td><td class="num">{{ totals.advance|inr }}</td><td></td></tr></tfoot>
+</table></div>
+{% endblock %}

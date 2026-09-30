@@ -1,0 +1,7 @@
+<form class="filters no-print" method="get">
+  <div><label for="period">Billing period</label><select id="period" name="period">{% if allow_all %}<option value="">All periods</option>{% endif %}{% for p in periods %}<option value="{{ p.pk }}" {% if period and p.pk == period.pk %}selected{% endif %}>{{ p.name }} ({{ p.get_status_display }})</option>{% endfor %}</select></div>
+  {% if with_dates %}<div><label for="from">Receipts from</label><input type="date" id="from" name="from" value="{{ date_from|date:'Y-m-d' }}"></div><div><label for="to">to</label><input type="date" id="to" name="to" value="{{ date_to|date:'Y-m-d' }}"></div>{% endif %}
+  <button class="btn">Show</button>
+  {% if csv %}<button class="btn" name="format" value="csv">Export CSV</button>{% endif %}
+  <button type="button" class="btn" onclick="window.print()">Print</button>
+</form>

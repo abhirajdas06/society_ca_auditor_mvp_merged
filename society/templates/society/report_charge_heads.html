@@ -1,0 +1,14 @@
+{% extends 'society/base.html' %}{% load money %}
+{% block title %}Charge-head summary{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Charge-head Summary</h1><div class="muted small">{{ period.name|default:"All periods" }} · issued components</div></div></div>
+{% include 'society/_period_filter.html' with allow_all=True %}
+<div class="card table-wrap"><table>
+  <thead><tr><th>Head</th><th>Type</th><th>Apportionment basis</th><th class="num">Lines</th><th class="num">Payable</th><th class="num">Paid</th><th class="num">Balance</th></tr></thead>
+  <tbody>{% for r in rows %}
+    <tr><td>{{ r.head.name|default:"(no head)" }} <span class="mono muted small">{{ r.head.code }}</span></td><td>{{ r.line_type }}{% if r.head and not r.head.is_interest %} · {{ r.head.get_charge_type_display }}{% endif %}</td><td class="small">{{ r.head.get_apportionment_basis_display }}</td>
+      <td class="num">{{ r.lines }}</td><td class="num">{{ r.payable|inr }}</td><td class="num">{{ r.paid|inr }}</td><td class="num"><strong>{{ r.balance|inr }}</strong></td></tr>
+  {% empty %}<tr><td colspan="7" class="muted">No issued components.</td></tr>{% endfor %}</tbody>
+  <tfoot><tr><td colspan="4">Total</td><td class="num">{{ totals.payable|inr }}</td><td class="num">{{ totals.paid|inr }}</td><td class="num">{{ totals.balance|inr }}</td></tr></tfoot>
+</table></div>
+{% endblock %}

@@ -1,0 +1,32 @@
+{% extends 'society/base.html' %}{% load static money %}
+{% block title %}Record receipt{% endblock %}
+{% block content %}
+<div class="page-head"><h1>Record receipt</h1><a class="btn" href="{% url 'receipt_list' %}">Back</a></div>
+<div class="note small">A receipt never changes a bill's payable amount. It creates allocation rows against specific components (e.g. MAIN-APR-2026, INT-APR-2026). Part payments leave a balance; any unallocated amount stays on the receipt as <strong>Advance / Unapplied</strong>.</div>
+<form method="post" id="receipt-form" data-mode="create" data-api="{% url 'receivable_lines_api' 0 %}">{% csrf_token %}
+  {% if form.non_field_errors %}<div class="msg error">{{ form.non_field_errors|join:" " }}</div>{% endif %}
+  <div class="grid side">
+    <div class="card">
+      <h2>Allocation</h2>
+      {% include 'society/_alloc_grid.html' with mode='create' %}
+      <div class="field" style="margin-top:.75rem;max-width:420px">
+        <label for="auto_policy">Then apply any remaining amount by</label>
+        <select id="auto_policy" name="auto_policy"><option value="">Nothing — keep as advance</option>{% for v, l in policies %}<option value="{{ v }}">{{ l }}</option>{% endfor %}</select>
+        <div class="help">Explicit amounts above are posted first and always take precedence. Automatic knock-off is a product policy, not a legal appropriation rule.</div>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Receipt details</h2>
+      {% for field in form %}
+        <div class="field" data-field="{{ field.name }}">
+          <label for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %} *{% endif %}</label>{{ field }}
+          {% if field.errors %}<ul class="errorlist">{% for e in field.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+        </div>
+      {% endfor %}
+      <button class="btn primary" id="save-receipt" style="width:100%">Save receipt &amp; allocation</button>
+      <p class="muted small">Receipt number is assigned from the society sequence on save. Cash is marked cleared immediately; cheques and transfers stay pending until cleared.</p>
+    </div>
+  </div>
+</form>
+{% endblock %}
+{% block scripts %}<script src="{% static 'society/js/app.js' %}"></script>{% endblock %}

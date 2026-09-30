@@ -1,0 +1,18 @@
+{% extends 'society/base.html' %}
+{% block title %}Audit log{% endblock %}
+{% block content %}
+<div class="page-head"><h1>Audit log</h1></div>
+<form class="filters" method="get">
+  <div><label for="action">Action</label><select id="action" name="action"><option value="">All</option>{% for a in actions %}<option value="{{ a }}" {% if filters.action == a %}selected{% endif %}>{{ a }}</option>{% endfor %}</select></div>
+  <div><label for="model_name">Model</label><input id="model_name" name="model_name" value="{{ filters.model_name|default:'' }}"></div>
+  <div><label for="object_id">Object ID</label><input id="object_id" name="object_id" value="{{ filters.object_id|default:'' }}" size="8"></div>
+  <button class="btn">Filter</button>
+</form>
+<div class="card table-wrap"><table>
+  <thead><tr><th>When</th><th>User</th><th>Action</th><th>Object</th><th>Details</th></tr></thead>
+  <tbody>{% for e in page %}
+    <tr><td class="nowrap small">{{ e.created_at|date:"d-m-Y H:i:s" }}</td><td>{{ e.user|default:"system" }}</td><td class="mono">{{ e.action }}</td><td class="small">{{ e.model_name }} #{{ e.object_id }}</td>
+      <td class="small mono" style="max-width:680px;word-break:break-word">{{ e.details }}</td></tr>
+  {% empty %}<tr><td colspan="5" class="muted">No entries.</td></tr>{% endfor %}</tbody>
+</table>{% include 'society/_pagination.html' %}</div>
+{% endblock %}

@@ -1,0 +1,15 @@
+<div class="alloc-summary" aria-live="polite">
+  <span>Receipt amount <strong id="sum-receipt">0.00</strong></span>
+  <span>Allocated <strong id="sum-allocated">0.00</strong></span>
+  <span>Remaining / Advance <strong id="sum-remaining">0.00</strong></span>
+  <span class="actions no-print" style="margin-left:auto">
+    <button type="button" class="btn small" data-fill="principal_then_interest" title="Oldest period: principal by head priority, then that period's interest">Fill: principal → interest</button>
+    <button type="button" class="btn small" data-fill="oldest_due">Fill: oldest due</button>
+    <button type="button" class="btn small" data-fill="clear">Clear</button>
+  </span>
+</div>
+<div class="table-wrap"><table id="alloc-grid">
+  <thead><tr><th>Reference</th><th>Bill date</th><th>Due date</th><th>Component</th><th class="num">Payable</th><th class="num">Paid</th><th class="num">Balance</th>{% if mode == 'reallocate' %}<th class="num">This receipt now</th>{% endif %}<th class="num">Allocate now</th></tr></thead>
+  <tbody><tr><td colspan="9" class="muted">Select a flat to load outstanding components.</td></tr></tbody>
+</table></div>
+<input type="hidden" name="allocations_json" id="allocations_json">

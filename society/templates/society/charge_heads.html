@@ -1,0 +1,17 @@
+{% extends 'society/base.html' %}{% load money %}
+{% block title %}Charge heads{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Charge heads</h1><div class="muted small">Fixed / Variable is application behaviour; apportionment basis is the statutory / bye-law basis.</div></div>
+{% if perms_can|get_item:'config.edit' %}<a class="btn primary" href="{% url 'charge_head_create' %}">Add charge head</a>{% endif %}</div>
+<div class="card table-wrap"><table>
+  <thead><tr><th>Code</th><th>Name</th><th>Type</th><th>Apportionment basis</th><th>Ref. prefix</th><th>Ledger</th><th>Resolution</th><th class="num">Knock-off priority</th><th>Status</th><th></th></tr></thead>
+  <tbody>{% for h in heads %}
+    <tr class="{% if not h.is_active %}dim{% endif %}"><td class="mono">{{ h.code }}</td><td>{{ h.name }}</td>
+      <td>{% if h.is_interest %}<span class="badge info">Interest engine</span>{% elif h.charge_type == 'fixed' %}<span class="badge">Fixed</span>{% else %}<span class="badge warn">Variable</span>{% endif %}</td>
+      <td>{{ h.get_apportionment_basis_display }}</td><td class="mono">{{ h.system_code }}</td><td>{{ h.ledger_code }}</td>
+      <td>{{ h.resolution_reference }}{% if h.resolution_date %} <span class="muted small">{{ h.resolution_date|date:"d-m-Y" }}</span>{% endif %}</td>
+      <td class="num">{{ h.knockoff_priority }}</td><td>{% if h.is_active %}<span class="badge ok">Active</span>{% else %}<span class="badge">Inactive</span>{% endif %}</td>
+      <td>{% if perms_can|get_item:'config.edit' %}<a href="{% url 'charge_head_edit' h.pk %}">Edit</a>{% endif %}</td></tr>
+  {% empty %}<tr><td colspan="10" class="muted">No charge heads. Add Maintenance, Water, Sinking Fund … and an INT head for interest.</td></tr>{% endfor %}</tbody>
+</table></div>
+{% endblock %}

@@ -1,0 +1,25 @@
+{% extends 'society/base.html' %}{% load static money %}
+{% block title %}{% if mode == 'reallocate' %}Reallocate{% else %}Allocate{% endif %} {{ receipt.receipt_no }}{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>{% if mode == 'reallocate' %}Reallocate{% else %}Allocate advance of{% endif %} receipt {{ receipt.receipt_no }}</h1>
+<div class="muted small">Unit {{ receipt.flat.unit_no }} · {{ receipt.receipt_date|date:"d-m-Y" }} · ₹ {{ receipt.amount|inr }} · allocated ₹ {{ receipt.allocated_amount|inr }} · advance ₹ {{ receipt.unallocated_amount|inr }}</div></div>
+<a class="btn" href="{% url 'receipt_detail' receipt.pk %}">Back</a></div>
+{% if mode == 'reallocate' %}
+<div class="note small">Enter the <strong>target</strong> allocation for this receipt. Reductions are posted as reversal events and increases as new allocation events; nothing is deleted. Example: 300 → MAIN / 50 → INT corrected to 250 / 100 keeps the original 300, adds a 50 reversal and a new 50 interest allocation.</div>
+{% else %}
+<div class="note small">Allocate the receipt's advance / unapplied amount to open components.</div>
+{% endif %}
+<form method="post" id="receipt-form" data-mode="{{ mode }}" data-api="{% url 'receivable_lines_api' receipt.flat_id %}" data-receipt="{{ receipt.pk }}"
+      data-amount="{% if mode == 'reallocate' %}{{ receipt.amount }}{% else %}{{ receipt.unallocated_amount }}{% endif %}">{% csrf_token %}
+  <div class="card">
+    {% include 'society/_alloc_grid.html' %}
+    {% if mode == 'reallocate' %}
+      <div class="field" style="margin-top:.75rem;max-width:560px"><label for="reason">Reason for reallocation *</label><input id="reason" name="reason" required maxlength="255" placeholder="e.g. Member instruction received on …"></div>
+    {% else %}
+      <div class="field" style="margin-top:.75rem;max-width:560px"><label for="note">Note / payer instruction</label><input id="note" name="note" maxlength="255"></div>
+    {% endif %}
+    <button class="btn primary">{% if mode == 'reallocate' %}Post reallocation{% else %}Post allocation{% endif %}</button>
+  </div>
+</form>
+{% endblock %}
+{% block scripts %}<script src="{% static 'society/js/app.js' %}"></script>{% endblock %}

@@ -1,0 +1,24 @@
+{% extends 'society/base.html' %}{% load money %}
+{% block title %}Bills{% endblock %}
+{% block content %}
+<div class="page-head"><h1>Bills</h1></div>
+<form class="filters" method="get">
+  <div><label for="period">Period</label><select id="period" name="period"><option value="">All</option>{% for p in periods %}<option value="{{ p.pk }}" {% if period_id == p.pk|stringformat:'s' %}selected{% endif %}>{{ p.name }}</option>{% endfor %}</select></div>
+  <div><label for="status">Status</label><select id="status" name="status"><option value="">All</option>{% for v, l in statuses %}<option value="{{ v }}" {% if status == v %}selected{% endif %}>{{ l }}</option>{% endfor %}</select></div>
+  {% include 'society/_flat_filter.html' %}
+  <div><label for="q">Bill / unit / member</label><input id="q" name="q" value="{{ q }}"></div>
+  <label class="small"><input type="checkbox" name="review" value="1" {% if request.GET.review %}checked{% endif %}> Needs variable-line review</label>
+  <button class="btn">Filter</button>
+</form>
+<div class="card table-wrap"><table>
+  <thead><tr><th>Bill no.</th><th>Period</th><th>Unit</th><th>Bill date</th><th>Due date</th><th class="num">Current charges</th><th class="num">Interest</th><th>Status</th></tr></thead>
+  <tbody>{% for b in page %}
+    <tr class="{% if b.status == 'cancelled' %}ineffective{% endif %}"><td><a href="{% url 'bill_detail' b.pk %}"><strong>{{ b.bill_no }}</strong></a></td><td>{{ b.period.name }}</td><td>{{ b.flat.unit_no }}</td>
+      <td class="nowrap">{{ b.bill_date|date:"d-m-Y" }}</td><td class="nowrap">{{ b.due_date|date:"d-m-Y" }}</td>
+      <td class="num">{{ b.current_charge_total|inr }}</td><td class="num">{{ b.current_interest_total|inr }}</td>
+      <td>{% if b.status == 'issued' %}<span class="badge ok">Issued</span>{% elif b.status == 'draft' %}<span class="badge warn">Draft</span>{% else %}<span class="badge bad">Cancelled</span>{% endif %}</td></tr>
+  {% empty %}<tr><td colspan="8" class="muted">No bills match.</td></tr>{% endfor %}</tbody>
+</table>
+{% include 'society/_pagination.html' %}
+</div>
+{% endblock %}

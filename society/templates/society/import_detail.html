@@ -1,0 +1,20 @@
+{% extends 'society/base.html' %}
+{% block title %}Import {{ batch.pk }}{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Import #{{ batch.pk }} — {{ batch.get_kind_display }}</h1><div class="muted small">{{ batch.file_name }} · {{ batch.get_status_display }} · {{ batch.summary }}</div></div>
+<div class="actions">
+  <a class="btn" href="{% url 'import_list' %}">Back</a>
+  <a class="btn" href="?format=csv">Exception report (CSV)</a>
+  {% if batch.status == 'validated' %}
+  <form class="inline" method="post">{% csrf_token %}<button class="btn primary" name="action" value="import" onclick="return confirm('Import all VALID rows? Errors and duplicates are skipped.')">Import valid rows</button><button class="btn danger" name="action" value="discard">Discard</button></form>
+  {% endif %}
+</div></div>
+<div class="card table-wrap"><table>
+  <thead><tr><th>Row</th><th>Status</th><th>Target</th><th>Messages</th><th>Data</th></tr></thead>
+  <tbody>{% for r in rows %}
+    <tr class="{% if r.status == 'error' %}warn{% elif r.status == 'duplicate' %}dim{% endif %}"><td>{{ r.row_number }}</td>
+      <td>{% if r.status == 'valid' %}<span class="badge info">Valid</span>{% elif r.status == 'imported' %}<span class="badge ok">Imported</span>{% elif r.status == 'duplicate' %}<span class="badge">Exists</span>{% else %}<span class="badge bad">Error</span>{% endif %}</td>
+      <td>{{ r.target }}</td><td class="small">{{ r.messages|join:"; " }}</td><td class="small mono">{{ r.data }}</td></tr>
+  {% endfor %}</tbody>
+</table></div>
+{% endblock %}

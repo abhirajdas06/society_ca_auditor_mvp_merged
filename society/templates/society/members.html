@@ -1,0 +1,14 @@
+{% extends 'society/base.html' %}{% load money %}
+{% block title %}Members{% endblock %}
+{% block content %}
+<div class="page-head"><h1>Members</h1>{% if perms_can|get_item:'master.edit' %}<a class="btn primary" href="{% url 'member_create' %}">Add member</a>{% endif %}</div>
+<div class="card table-wrap"><table>
+  <thead><tr><th>Member no.</th><th>Name</th><th>Units</th><th>Mobile</th><th>Email</th><th>Status</th><th></th></tr></thead>
+  <tbody>{% for m in members %}
+    <tr class="{% if not m.is_active %}dim{% endif %}"><td>{{ m.member_no }}</td><td>{{ m.title }} {{ m.full_name }}</td>
+      <td>{% for l in m.flat_links.all %}{{ l.flat.unit_no }} <span class="muted small">{{ l.get_role_display }}</span>{% if not forloop.last %}, {% endif %}{% endfor %}</td>
+      <td>{{ m.mobile }}</td><td>{{ m.email }}</td><td>{% if m.is_active %}<span class="badge ok">Active</span>{% else %}<span class="badge">Inactive</span>{% endif %}</td>
+      <td>{% if perms_can|get_item:'master.edit' %}<a href="{% url 'member_edit' m.pk %}">Edit</a>{% endif %}</td></tr>
+  {% empty %}<tr><td colspan="7" class="muted">No members.</td></tr>{% endfor %}</tbody>
+</table></div>
+{% endblock %}

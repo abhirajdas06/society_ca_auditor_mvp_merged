@@ -1,0 +1,17 @@
+{% extends 'society/base.html' %}{% load money %}
+{% block title %}Bill register{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Bill Register</h1><div class="muted small">{{ active_society.name }} · {{ period.name|default:"no period" }} · Current columns tie to issued/draft bill lines; Paid/Balance derive from effective allocations.</div></div></div>
+{% include 'society/_period_filter.html' with csv=True %}
+<div class="card table-wrap"><table>
+  <thead><tr><th>Bill no.</th><th>Unit</th><th>Member</th>{% for h in heads %}<th class="num">{{ h.name }}</th>{% endfor %}<th class="num">Amount</th><th class="num">Interest</th><th class="num">Bill Amount</th><th class="num">Principal Arrear</th><th class="num">Interest Arrear</th><th class="num">Payable Amount</th><th class="num">Paid</th><th class="num">Balance Amount</th></tr></thead>
+  <tbody>{% for r in rows %}
+    <tr class="{% if r.bill.status == 'draft' %}warn{% endif %}"><td><a href="{% url 'bill_detail' r.bill.pk %}">{{ r.bill.bill_no }}</a>{% if r.bill.status == 'draft' %} <span class="badge warn">Draft</span>{% endif %}</td><td>{{ r.bill.flat.unit_no }}</td><td class="small">{{ r.member }}</td>
+      {% for v in r.heads %}<td class="num">{{ v|inr }}</td>{% endfor %}
+      <td class="num">{{ r.amount|inr }}</td><td class="num">{{ r.interest|inr }}</td><td class="num">{{ r.bill_amount|inr }}</td><td class="num">{{ r.principal_arrear|inr }}</td><td class="num">{{ r.interest_arrear|inr }}</td>
+      <td class="num"><strong>{{ r.payable|inr }}</strong></td><td class="num">{{ r.paid|inr }}</td><td class="num"><strong>{{ r.balance|inr }}</strong></td></tr>
+  {% empty %}<tr><td colspan="20" class="muted">No bills in this period.</td></tr>{% endfor %}</tbody>
+  {% if rows %}<tfoot><tr><td colspan="3">Total ({{ rows|length }} bills)</td>{% for v in totals.heads %}<td class="num">{{ v|inr }}</td>{% endfor %}
+    <td class="num">{{ totals.amount|inr }}</td><td class="num">{{ totals.interest|inr }}</td><td class="num">{{ totals.bill_amount|inr }}</td><td class="num">{{ totals.principal_arrear|inr }}</td><td class="num">{{ totals.interest_arrear|inr }}</td><td class="num">{{ totals.payable|inr }}</td><td class="num">{{ totals.paid|inr }}</td><td class="num">{{ totals.balance|inr }}</td></tr></tfoot>{% endif %}
+</table></div>
+{% endblock %}

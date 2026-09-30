@@ -1,0 +1,10 @@
+line-length = 160
+target-version = "py312"
+extend-exclude = ["society/migrations", ".venv", "staticfiles"]
+
+[lint]
+select = ["E", "F", "W", "I", "B", "DJ"]
+ignore = ["E501", "E741", "B904", "DJ001", "DJ008"]
+
+[lint.per-file-ignores]
+"society/management/commands/seed_demo.py" = ["E231"]

@@ -1,0 +1,39 @@
+{% extends 'society/base.html' %}{% load money %}
+{% block title %}Statement {{ flat.unit_no }}{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Flat Statement — {{ flat.unit_no }}</h1><div class="muted small">{{ active_society.name }} · {{ flat.member_display|default:"no member linked" }} · Wing {{ flat.wing.code }}</div></div>
+<div class="actions no-print">{% if perms_can|get_item:'receipt.create' %}<a class="btn primary" href="{% url 'receipt_create' %}?flat={{ flat.pk }}">Record receipt</a>{% endif %}<button class="btn" onclick="window.print()">Print</button></div></div>
+<form class="filters no-print" method="get">
+  <div><label for="from">From</label><input type="date" id="from" name="from" value="{{ filters.from }}"></div>
+  <div><label for="to">To</label><input type="date" id="to" name="to" value="{{ filters.to }}"></div>
+  <button class="btn">Show</button>
+</form>
+<div class="stats">
+  <div class="stat"><div class="label">Opening outstanding</div><div class="value">{{ opening|inr }}</div></div>
+  <div class="stat"><div class="label">+ Current billed</div><div class="value">{{ billed|inr }}</div></div>
+  <div class="stat"><div class="label">+ Interest billed</div><div class="value">{{ interest|inr }}</div></div>
+  <div class="stat"><div class="label">− Effective payments</div><div class="value">{{ payments|inr }}</div></div>
+  <div class="stat"><div class="label">= Closing outstanding</div><div class="value">{{ closing|inr }}</div></div>
+  <div class="stat"><div class="label">Advance (not yet applied)</div><div class="value">{{ advance_total|inr }}</div></div>
+</div>
+<div class="card table-wrap"><h2>Chronological activity</h2><table>
+  <thead><tr><th>Date</th><th>Document</th><th>Component</th><th class="num">Debit / Payable</th><th class="num">Credit / Paid</th><th class="num">Balance</th><th>Receipt</th><th>Narration</th></tr></thead>
+  <tbody>
+    <tr class="dim"><td></td><td colspan="4">Opening outstanding</td><td class="num">{{ opening|inr }}</td><td colspan="2"></td></tr>
+    {% for e in events %}
+    <tr class="{% if e.kind == 'bounce' or e.kind == 'reversal' %}warn{% endif %}"><td class="nowrap">{{ e.date|date:"d-m-Y" }}</td>
+      <td>{% if e.kind == 'bill' or e.kind == 'interest' %}<a href="{% url 'bill_detail' e.line.bill_id %}">{{ e.document }}</a>{% else %}{{ e.document }}{% endif %}</td>
+      <td class="mono">{{ e.component }}</td>
+      <td class="num">{% if e.debit %}{{ e.debit|inr }}{% endif %}</td><td class="num">{% if e.credit %}{{ e.credit|inr }}{% endif %}</td><td class="num"><strong>{{ e.balance|inr }}</strong></td>
+      <td>{% if e.receipt %}<a href="{% url 'receipt_detail' e.receipt.pk %}">{{ e.receipt.receipt_no }}</a>{% endif %}</td><td class="small">{{ e.narration }}</td></tr>
+    {% empty %}<tr><td colspan="8" class="muted">No activity in this range.</td></tr>{% endfor %}
+  </tbody>
+  <tfoot><tr><td colspan="5">Closing outstanding</td><td class="num">{{ closing|inr }}</td><td colspan="2"></td></tr></tfoot>
+</table></div>
+<div class="card table-wrap"><h2>Open-item view by component</h2><table>
+  <thead><tr><th>Reference</th><th>Bill</th><th>Type</th><th>Due</th><th class="num">Payable</th><th class="num">Paid</th><th class="num">Balance</th></tr></thead>
+  <tbody>{% for c in components %}<tr class="{% if not c.balance %}dim{% endif %}"><td class="mono">{{ c.line.display_code }}</td><td><a href="{% url 'bill_detail' c.line.bill_id %}">{{ c.line.bill.bill_no }}</a></td><td>{{ c.line.get_line_type_display }}</td><td>{{ c.line.due_date|date:"d-m-Y" }}</td><td class="num">{{ c.payable|inr }}</td><td class="num">{{ c.paid|inr }}</td><td class="num"><strong>{{ c.balance|inr }}</strong></td></tr>
+  {% empty %}<tr><td colspan="7" class="muted">No issued components.</td></tr>{% endfor %}</tbody>
+</table></div>
+{% if advances %}<div class="card"><h2>Unapplied receipts</h2><table><tbody>{% for r in advances %}<tr><td><a href="{% url 'receipt_detail' r.pk %}">{{ r.receipt_no }}</a></td><td>{{ r.receipt_date|date:"d-m-Y" }}</td><td class="num">{{ r.unallocated_amount|inr }}</td></tr>{% endfor %}</tbody></table></div>{% endif %}
+{% endblock %}

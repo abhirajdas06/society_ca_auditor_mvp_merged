@@ -1,0 +1,46 @@
+{% extends 'society/base.html' %}{% load money %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+{% if not active_society %}
+  <div class="card"><h1>No society assigned</h1><p class="muted">Ask an administrator to add you to a society (Django admin → Society memberships).</p></div>
+{% else %}
+<div class="page-head">
+  <div><h1>{{ active_society.name }}</h1><div class="muted small">Reg. {{ active_society.registration_number|default:"—" }} · Current period: {{ current_period.name|default:"none" }}{% if current_period %} ({{ current_period.get_status_display }}){% endif %}</div></div>
+  <div class="actions">
+    {% if perms_can|get_item:'receipt.create' %}<a class="btn primary" href="{% url 'receipt_create' %}">Record receipt</a>{% endif %}
+    <a class="btn" href="{% url 'outstanding_report' %}">Outstanding</a>
+  </div>
+</div>
+<div class="stats">
+  <div class="stat"><div class="label">Total flats</div><div class="value">{{ flat_count }}</div></div>
+  <div class="stat"><div class="label">Active members</div><div class="value">{{ member_count }}</div></div>
+  <div class="stat"><div class="label">Current period billed</div><div class="value">₹ {{ current_billed|inr }}</div></div>
+  <div class="stat"><div class="label">Total outstanding</div><div class="value">₹ {{ outstanding|inr }}</div></div>
+  <div class="stat"><div class="label">Effective collections (allocated)</div><div class="value">₹ {{ paid|inr }}</div></div>
+  <div class="stat"><div class="label">Advance / unapplied</div><div class="value">₹ {{ advance|inr }}</div></div>
+  <div class="stat"><div class="label">Overdue flats</div><div class="value">{{ overdue_flats }}</div></div>
+  <div class="stat"><div class="label">Awaiting clearance</div><div class="value">{{ awaiting_clearance|length }}</div></div>
+</div>
+<div class="note small">Every figure is derived live from bill lines, receipts and allocations. Outstanding = issued payable ₹ {{ payable|inr }} − effective allocations ₹ {{ paid|inr }}.</div>
+<div class="grid cols-2">
+  <div class="card">
+    <h2>Recent receipts</h2>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Receipt</th><th>Date</th><th>Unit</th><th class="num">Amount</th><th class="num">Advance</th><th>Status</th></tr></thead>
+      <tbody>{% for r in recent_receipts %}
+        <tr class="{% if not r.is_effective %}ineffective{% endif %}"><td><a href="{% url 'receipt_detail' r.pk %}">{{ r.receipt_no }}</a></td><td class="nowrap">{{ r.receipt_date|date:"d-m-Y" }}</td><td>{{ r.flat.unit_no }}</td><td class="num">{{ r.amount|inr }}</td><td class="num">{{ r.unallocated_amount|inr }}</td><td>{% include 'society/_receipt_status.html' %}</td></tr>
+      {% empty %}<tr><td colspan="6" class="muted">No receipts yet.</td></tr>{% endfor %}</tbody>
+    </table></div>
+  </div>
+  <div class="card">
+    <h2>Receipts awaiting clearance</h2>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Receipt</th><th>Date</th><th>Unit</th><th>Mode / Ref</th><th class="num">Amount</th></tr></thead>
+      <tbody>{% for r in awaiting_clearance %}
+        <tr><td><a href="{% url 'receipt_detail' r.pk %}">{{ r.receipt_no }}</a></td><td class="nowrap">{{ r.receipt_date|date:"d-m-Y" }}</td><td>{{ r.flat.unit_no }}</td><td>{{ r.get_payment_mode_display }} {{ r.cheque_no|default:r.transaction_ref }}</td><td class="num">{{ r.amount|inr }}</td></tr>
+      {% empty %}<tr><td colspan="5" class="muted">Nothing pending.</td></tr>{% endfor %}</tbody>
+    </table></div>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

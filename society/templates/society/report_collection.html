@@ -1,0 +1,24 @@
+{% extends 'society/base.html' %}{% load money %}
+{% block title %}Collection sheet{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Collection Sheet</h1><div class="muted small">{{ period.name }} · receipts dated {{ date_from|date:"d-m-Y" }} to {{ date_to|date:"d-m-Y" }} (received / cleared only)</div></div></div>
+{% include 'society/_period_filter.html' with csv=True with_dates=True %}
+<div class="card table-wrap"><table>
+  <thead><tr><th>Bill no.</th><th>Unit</th><th>Member</th><th class="num">Bill Amount</th><th class="num">Interest</th><th class="num">Arrears</th><th class="num">Total Amount</th><th class="num">Amount Received</th><th>Cheque / Ref</th><th>Payment Date</th><th>Bank / Cash</th><th class="num">Balance</th></tr></thead>
+  <tbody>{% for r in rows %}
+    <tr><td><a href="{% url 'bill_detail' r.bill.pk %}">{{ r.bill.bill_no }}</a></td><td><a href="{% url 'flat_statement' r.bill.flat_id %}">{{ r.bill.flat.unit_no }}</a></td><td class="small">{{ r.member }}</td>
+      <td class="num">{{ r.amount|inr }}</td><td class="num">{{ r.interest|inr }}</td><td class="num">{{ r.arrears|inr }}</td><td class="num">{{ r.payable|inr }}</td>
+      <td class="num"><strong>{{ r.received|inr }}</strong></td>
+      <td class="small">{% for x in r.receipts %}<a href="{% url 'receipt_detail' x.pk %}">{{ x.receipt_no }}</a> {{ x.cheque_no|default:x.transaction_ref }}{% if not forloop.last %}<br>{% endif %}{% endfor %}</td>
+      <td class="small nowrap">{% for x in r.receipts %}{{ x.receipt_date|date:"d-m-Y" }}{% if not forloop.last %}<br>{% endif %}{% endfor %}</td>
+      <td class="small">{% for x in r.receipts %}{{ x.bank_name|default:x.get_payment_mode_display }}{% if not forloop.last %}<br>{% endif %}{% endfor %}</td>
+      <td class="num"><strong>{{ r.balance|inr }}</strong></td></tr>
+  {% empty %}<tr><td colspan="12" class="muted">No bills.</td></tr>{% endfor %}</tbody>
+  {% if rows %}<tfoot><tr><td colspan="3">Total</td><td class="num">{{ totals.amount|inr }}</td><td class="num">{{ totals.interest|inr }}</td><td class="num"></td><td class="num">{{ totals.payable|inr }}</td><td class="num">{{ total_received|inr }}</td><td colspan="3"></td><td class="num">{{ totals.balance|inr }}</td></tr></tfoot>{% endif %}
+</table></div>
+{% if unbilled_receipts %}
+<div class="card"><h2>Receipts from flats without a bill in this period</h2>
+  <table><tbody>{% for x in unbilled_receipts %}<tr><td><a href="{% url 'receipt_detail' x.pk %}">{{ x.receipt_no }}</a></td><td>{{ x.flat.unit_no }}</td><td>{{ x.receipt_date|date:"d-m-Y" }}</td><td class="num">{{ x.amount|inr }}</td></tr>{% endfor %}</tbody></table>
+</div>{% endif %}
+<p class="muted small">Amount received = effective receipts for the flat dated within the window (they include advances). Balance = current outstanding of this bill's components plus its arrears.</p>
+{% endblock %}

@@ -1,0 +1,26 @@
+{% extends 'society/base.html' %}{% load money %}
+{% block title %}Flats{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Flats</h1>
+  <div class="actions">
+    {% if perms_can|get_item:'master.edit' %}<a class="btn" href="{% url 'wing_create' %}">Add wing</a><a class="btn" href="{% url 'flat_member_create' %}">Link member</a><a class="btn primary" href="{% url 'flat_create' %}">Add flat</a>{% endif %}
+  </div>
+</div>
+<form class="filters" method="get">
+  <div><label for="q">Unit / member</label><input id="q" name="q" value="{{ q }}" autofocus></div>
+  {% include 'society/_flat_filter.html' %}
+  <button class="btn">Search</button>
+</form>
+<div class="card table-wrap"><table>
+  <thead><tr><th>Unit</th><th>Wing</th><th>Floor</th><th class="num">Area (sq ft)</th><th>Type</th><th>Member / Joint member</th><th>Status</th><th></th></tr></thead>
+  <tbody>{% for f in flats %}
+    <tr class="{% if not f.is_active %}dim{% endif %}">
+      <td><strong>{{ f.unit_no }}</strong></td><td>{{ f.wing.code }}</td><td>{{ f.floor }}</td><td class="num">{{ f.area_sqft }}</td><td>{{ f.get_unit_type_display }}</td>
+      <td>{% for l in f.member_links.all %}{{ l.member.full_name }} <span class="muted small">({{ l.get_role_display }})</span>{% if not forloop.last %}<br>{% endif %}{% empty %}<span class="muted">—</span>{% endfor %}</td>
+      <td>{% if f.is_active %}<span class="badge ok">Active</span>{% else %}<span class="badge">Inactive</span>{% endif %}</td>
+      <td class="nowrap"><a href="{% url 'flat_statement' f.pk %}">Statement</a> · <a href="{% url 'charge_rule_list' %}?flat={{ f.pk }}">Charges</a>{% if perms_can|get_item:'master.edit' %} · <a href="{% url 'flat_edit' f.pk %}">Edit</a>{% endif %}</td>
+    </tr>
+  {% empty %}<tr><td colspan="8" class="muted">No flats.</td></tr>{% endfor %}</tbody>
+</table></div>
+{% endblock %}

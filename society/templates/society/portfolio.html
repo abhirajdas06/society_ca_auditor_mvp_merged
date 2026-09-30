@@ -1,0 +1,41 @@
+{% extends 'society/base.html' %}{% load money %}
+{% block title %}My societies{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><h1>My societies</h1><div class="muted small">{{ totals.societies }} society(ies) · {{ totals.flats }} flats. Each society's ledger is separate; open one to work in it.</div></div>
+</div>
+<div class="stats">
+  <div class="stat"><div class="label">Total outstanding</div><div class="value">₹ {{ totals.outstanding|inr }}</div></div>
+  <div class="stat"><div class="label">Overdue</div><div class="value">₹ {{ totals.overdue|inr }}</div></div>
+  <div class="stat"><div class="label">Advance / unapplied</div><div class="value">₹ {{ totals.advance|inr }}</div></div>
+  <div class="stat"><div class="label">Billed to date</div><div class="value">₹ {{ totals.payable|inr }}</div></div>
+  <div class="stat"><div class="label">Collected (allocated)</div><div class="value">₹ {{ totals.paid|inr }}</div></div>
+</div>
+<div class="card table-wrap"><table>
+  <thead><tr><th>Society</th><th>My role</th><th class="num">Flats</th><th>Latest period</th><th>Needs attention</th><th class="num">Outstanding</th><th class="num">Overdue</th><th class="num">Advance</th><th>Last receipt</th><th class="no-print"></th></tr></thead>
+  <tbody>{% for r in rows %}
+    <tr class="{% if r.society.pk == active_society.pk %}warn{% endif %}">
+      <td><strong>{{ r.society.name|truncatechars:60 }}</strong>{% if r.society.pk == active_society.pk %} <span class="badge info">Active</span>{% endif %}
+        <div class="muted small">{{ r.society.registration_number|default:"" }} · {{ r.society.city }}</div></td>
+      <td class="small">{{ r.role }}</td>
+      <td class="num">{{ r.flats }}</td>
+      <td class="small">{% if r.period %}{{ r.period.name }}<div class="muted">{{ r.period.get_status_display }}</div>{% else %}<span class="muted">none</span>{% endif %}</td>
+      <td class="small">
+        {% if r.pending_review %}<span class="badge warn">{{ r.pending_review }} variable line(s) to review</span><br>{% endif %}
+        {% if r.awaiting_clearance %}<span class="badge">{{ r.awaiting_clearance }} receipt(s) awaiting clearance</span><br>{% endif %}
+        {% if not r.needs_attention and not r.awaiting_clearance %}<span class="muted">—</span>{% endif %}
+      </td>
+      <td class="num"><strong>{{ r.outstanding|inr }}</strong></td>
+      <td class="num">{{ r.overdue|inr }}</td>
+      <td class="num">{{ r.advance|inr }}</td>
+      <td class="small nowrap">{{ r.last_receipt|date:"d-m-Y"|default:"—" }}</td>
+      <td class="no-print">
+        {% if r.society.pk == active_society.pk %}<a class="btn small" href="{% url 'dashboard' %}">Dashboard</a>
+        {% else %}<form class="inline" method="post" action="{% url 'switch_society' %}">{% csrf_token %}<input type="hidden" name="society" value="{{ r.society.pk }}"><input type="hidden" name="next" value="{% url 'dashboard' %}"><button class="btn small primary">Open</button></form>{% endif %}
+      </td>
+    </tr>
+  {% empty %}<tr><td colspan="10" class="muted">You are not a member of any society yet. An administrator adds society memberships in Django admin.</td></tr>{% endfor %}</tbody>
+  {% if rows %}<tfoot><tr><td colspan="5">Total across {{ totals.societies }} society(ies)</td><td class="num">{{ totals.outstanding|inr }}</td><td class="num">{{ totals.overdue|inr }}</td><td class="num">{{ totals.advance|inr }}</td><td colspan="2"></td></tr></tfoot>{% endif %}
+</table></div>
+<p class="muted small">Figures are derived per society from its own bill lines, receipts and allocations. Nothing is pooled across societies.</p>
+{% endblock %}

@@ -1,0 +1,67 @@
+{% extends 'society/base.html' %}{% load money %}
+{% block title %}Bill {{ bill.bill_no }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Bill {{ bill.bill_no }} {% if bill.status == 'issued' %}<span class="badge ok">Issued</span>{% elif bill.status == 'draft' %}<span class="badge warn">Draft</span>{% else %}<span class="badge bad">Cancelled</span>{% endif %}</h1>
+    <div class="muted small">Unit {{ bill.flat.unit_no }} · {{ bill.flat.member_display }} · {{ bill.period.name }} · Bill date {{ bill.bill_date|date:"d-m-Y" }} · Due {{ bill.due_date|date:"d-m-Y" }}</div>
+    <div class="muted small">{% if bill.issued_at %}Issued {{ bill.issued_at|date:"d-m-Y H:i" }} by {{ bill.issued_by }}{% endif %}{% if bill.cancelled_at %} · Cancelled {{ bill.cancelled_at|date:"d-m-Y H:i" }} by {{ bill.cancelled_by }}: {{ bill.cancel_reason }}{% endif %}</div>
+  </div>
+  <div class="actions no-print">
+    <a class="btn" href="{% url 'flat_statement' bill.flat_id %}">Flat statement</a>
+    {% if bill.status == 'draft' and perms_can|get_item:'billing.approve' %}<form class="inline" method="post" action="{% url 'bill_issue' bill.pk %}">{% csrf_token %}<button class="btn primary" onclick="return confirm('Issue this bill?')">Issue</button></form>{% endif %}
+    {% if bill.status == 'draft' and perms_can|get_item:'billing.prepare' or bill.status == 'issued' and perms_can|get_item:'billing.approve' %}
+      <form class="inline" method="post" action="{% url 'bill_cancel' bill.pk %}">{% csrf_token %}<input name="reason" placeholder="Cancellation reason" required><button class="btn danger">Cancel bill</button></form>
+    {% endif %}
+    <button class="btn" onclick="window.print()">Print</button>
+  </div>
+</div>
+<div class="grid side">
+  <div>
+    <div class="card">
+      <h2>Current receivable components</h2>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Reference</th><th>Head</th><th class="num">Qty</th><th class="num">Rate</th><th class="num">Payable</th><th class="num">Paid</th><th class="num">Balance</th><th></th></tr></thead>
+        <tbody>{% for l in lines %}
+          <tr class="{% if not l.confirmed %}warn{% endif %}">
+            <td><strong class="mono">{{ l.display_code }}</strong><div class="muted small">#{{ l.pk }} · {{ l.description }}</div>
+              {% if not l.confirmed %}<span class="badge warn">Review required</span>{% elif l.confirmed_by %}<div class="muted small">Confirmed by {{ l.confirmed_by }} {{ l.confirmed_at|date:"d-m-Y H:i" }}</div>{% endif %}</td>
+            <td>{{ l.charge_head.name|default:"—" }} <span class="muted small">{{ l.get_line_type_display }}</span></td>
+            <td class="num">{{ l.quantity }}</td><td class="num">{{ l.rate|inr }}</td>
+            <td class="num">{{ l.amount|inr }}</td><td class="num">{{ l.paid|inr }}</td><td class="num"><strong>{{ l.balance|inr }}</strong></td>
+            <td>{% if bill.status == 'draft' and l.charge_head.charge_type == 'variable' and l.line_type == 'charge' and perms_can|get_item:'billing.prepare' %}<a class="btn small" href="{% url 'bill_line_review' l.pk %}">Review</a>{% endif %}</td>
+          </tr>
+          {% if l.line_type == 'interest' and l.interest_charge %}
+          <tr class="dim"><td colspan="8" class="small">
+            <strong>Interest working:</strong> {{ l.interest_charge.formula }} · rate {{ l.interest_charge.rate_pa }}% p.a. · calc date {{ l.interest_charge.calculation_date|date:"d-m-Y" }}
+            <table style="margin-top:.35rem"><thead><tr><th>Source principal</th><th>From</th><th>To</th><th class="num">Days</th><th class="num">Principal outstanding</th><th class="num">Interest</th><th>Segment ended by</th></tr></thead><tbody>
+            {% for s in l.interest_charge.segments.all %}<tr><td class="mono">{{ s.source_line.display_code }}</td><td>{{ s.from_date|date:"d-m-Y" }}</td><td>{{ s.to_date|date:"d-m-Y" }}</td><td class="num">{{ s.days }}</td><td class="num">{{ s.principal|inr }}</td><td class="num">{{ s.amount }}</td><td>{% if s.ended_by_allocation_id %}payment (allocation #{{ s.ended_by_allocation_id }}){% else %}calculation date{% endif %}</td></tr>{% endfor %}
+            </tbody></table>
+          </td></tr>
+          {% endif %}
+        {% empty %}<tr><td colspan="8" class="muted">No lines.</td></tr>{% endfor %}</tbody>
+      </table></div>
+    </div>
+    <div class="card">
+      <h2>Arrears brought forward <span class="muted small">(snapshot of original receivables — not new debt)</span></h2>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Original component</th><th>Original bill</th><th class="num">Arrear on this bill</th><th class="num">Still outstanding now</th></tr></thead>
+        <tbody>{% for oi in opening %}
+          <tr><td class="mono">{{ oi.source_line.display_code }}</td><td><a href="{% url 'bill_detail' oi.source_line.bill_id %}">{{ oi.source_line.bill.bill_no }}</a></td><td class="num">{{ oi.snapshot_amount|inr }}</td><td class="num">{{ oi.current_balance_snapshot|inr }}</td></tr>
+        {% empty %}<tr><td colspan="4" class="muted">No arrears.</td></tr>{% endfor %}</tbody>
+      </table></div>
+    </div>
+  </div>
+  <div class="card">
+    <h2>Bill summary</h2>
+    <div class="kv"><span>Principal arrears</span><strong>{{ bill.opening_principal|inr }}</strong></div>
+    <div class="kv"><span>Interest arrears</span><strong>{{ bill.opening_interest|inr }}</strong></div>
+    <div class="kv"><span>Current charges</span><strong>{{ bill.current_charge_total|inr }}</strong></div>
+    <div class="kv"><span>Interest</span><strong>{{ bill.current_interest_total|inr }}</strong></div>
+    <div class="kv total"><span>Payable amount</span><strong>₹ {{ bill.total_payable|inr }}</strong></div>
+    <div class="kv"><span>Paid since</span><strong>{{ bill.total_paid|inr }}</strong></div>
+    <div class="kv total"><span>Balance now</span><strong>₹ {{ bill.current_outstanding|inr }}</strong></div>
+    <p class="muted small">Paid and balance are derived from effective receipt allocations. A receipt never reduces the billed amount.</p>
+  </div>
+</div>
+{% endblock %}

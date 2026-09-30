@@ -1,0 +1,21 @@
+{% extends 'society/base.html' %}{% load money %}
+{% block title %}Receipt register{% endblock %}
+{% block content %}
+<div class="page-head"><h1>Receipt Register</h1></div>
+<form class="filters no-print" method="get">
+  <div><label for="from">From</label><input type="date" id="from" name="from" value="{{ filters.from }}"></div>
+  <div><label for="to">To</label><input type="date" id="to" name="to" value="{{ filters.to }}"></div>
+  <div><label for="status">Status</label><select id="status" name="status"><option value="">All</option>{% for v, l in statuses %}<option value="{{ v }}" {% if filters.status == v %}selected{% endif %}>{{ l }}</option>{% endfor %}</select></div>
+  <button class="btn">Show</button><button class="btn" name="format" value="csv">Export CSV</button><button type="button" class="btn" onclick="window.print()">Print</button>
+</form>
+<div class="card table-wrap"><table>
+  <thead><tr><th>Receipt</th><th>Date</th><th>Unit</th><th>Payer</th><th>Mode</th><th>Cheque / UTR</th><th>Status</th><th class="num">Receipt Amount</th><th class="num">Allocated</th><th class="num">Advance</th></tr></thead>
+  <tbody>{% for row in rows %}{% with r=row.receipt %}
+    <tr class="{% if not r.is_effective %}ineffective{% endif %}"><td><a href="{% url 'receipt_detail' r.pk %}">{{ r.receipt_no }}</a></td><td class="nowrap">{{ r.receipt_date|date:"d-m-Y" }}</td><td>{{ r.flat.unit_no }}</td><td class="small">{{ r.member.full_name|default:"" }}</td>
+      <td>{{ r.get_payment_mode_display }}</td><td>{{ r.cheque_no|default:r.transaction_ref }}</td><td>{% include 'society/_receipt_status.html' %}</td>
+      <td class="num">{{ r.amount|inr }}</td><td class="num">{{ row.allocated|inr }}</td><td class="num">{{ row.advance|inr }}</td></tr>
+  {% endwith %}{% empty %}<tr><td colspan="10" class="muted">No receipts.</td></tr>{% endfor %}</tbody>
+  <tfoot><tr><td colspan="7">Effective receipts (received + cleared)</td><td class="num">{{ totals.amount|inr }}</td><td class="num">{{ totals.allocated|inr }}</td><td class="num">{{ totals.advance|inr }}</td></tr>
+  {% if totals.ineffective %}<tr><td colspan="7">Bounced / cancelled (excluded)</td><td class="num">{{ totals.ineffective|inr }}</td><td colspan="2"></td></tr>{% endif %}</tfoot>
+</table></div>
+{% endblock %}

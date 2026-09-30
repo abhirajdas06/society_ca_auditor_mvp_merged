@@ -1,0 +1,1 @@
+{% if r.status == 'cleared' %}<span class="badge ok">Cleared</span>{% elif r.status == 'received' %}<span class="badge warn">Pending clearance</span>{% elif r.status == 'bounced' %}<span class="badge bad">Bounced</span>{% else %}<span class="badge bad">Cancelled</span>{% endif %}

@@ -1,0 +1,26 @@
+# Local / staging-parity stack. Secrets come from .env (never committed).
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: society_ca
+      POSTGRES_USER: society_ca
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-society_ca}
+    volumes: ["pgdata:/var/lib/postgresql/data"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U society_ca -d society_ca"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+  web:
+    build: .
+    env_file: [.env]
+    environment:
+      DATABASE_URL: postgresql://society_ca:${POSTGRES_PASSWORD:-society_ca}@db:5432/society_ca
+      RUN_MIGRATIONS: "1"
+      SECURE_SSL_REDIRECT: "0"
+    depends_on:
+      db: {condition: service_healthy}
+    ports: ["8000:8000"]
+volumes:
+  pgdata:
