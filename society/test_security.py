@@ -53,10 +53,7 @@ class SecurityTests(LedgerFixture, TestCase):
         ]
 
     def test_every_view_declares_a_capability(self):
-        public = {"health"}
         for pattern in app_urls.urlpatterns:
-            if pattern.name in public:
-                continue
             cap = getattr(pattern.callback, "required_capability", None)
             self.assertIn(cap, CAPABILITIES, f"{pattern.name} is not protected by permissions.require")
 
@@ -193,7 +190,3 @@ class ViewFlowTests(LedgerFixture, TestCase):
         ]
         for url in pages:
             self.assertEqual(self.client.get(url).status_code, 200, url)
-
-    def test_health_endpoint(self):
-        self.client.logout()
-        self.assertEqual(self.client.get(reverse("health")).json()["status"], "ok")

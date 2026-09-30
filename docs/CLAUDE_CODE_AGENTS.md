@@ -77,10 +77,9 @@ Do not modify the receipt allocation engine.
 
 Own:
 
-- CI configuration
-- Docker files
+- pytest configuration
 - pytest config
-- deployment docs
+- developer setup docs
 - smoke/health checks
 - documentation cleanup
 
@@ -89,8 +88,7 @@ Tasks:
 - run compile checks
 - run tests in a network-enabled Django/PostgreSQL environment
 - verify migrations
-- verify Docker image/build
-- verify CI
+- verify lint and the test suite
 - check secrets/settings separation
 - document backup/restore
 

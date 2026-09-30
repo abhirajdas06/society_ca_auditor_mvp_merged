@@ -51,10 +51,11 @@
 
 ### Infrastructure
 - PostgreSQL
-- Docker
-- GitHub Actions
 - migration files
 - seed command
+- pytest suite and ruff lint
+
+Deployment tooling is deliberately out of scope for this MVP; the project runs from a virtualenv.
 
 ## Core financial invariants
 

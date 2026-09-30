@@ -1,8 +1,0 @@
-# Used on staging/production hosts by scripts/deploy.sh. The database is an external managed
-# PostgreSQL referenced by DATABASE_URL in the host's .env; backups are handled there.
-services:
-  web:
-    image: ${IMAGE_REF}
-    env_file: [.env]
-    restart: unless-stopped
-    ports: ["127.0.0.1:8000:8000"]   # behind the host's TLS-terminating reverse proxy

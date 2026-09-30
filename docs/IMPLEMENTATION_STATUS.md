@@ -15,11 +15,11 @@ Last updated: 18 September 2026.
 | G | Excess becomes advance; later allocation reduces it | `tests.AllocationTests.test_excess_becomes_advance_and_later_allocation_reduces_it` |
 | H | Reversal + replacement, nothing deleted | `tests.ReallocationTests` |
 | I | Bounce removes PAID, history remains | `tests.ReceiptLifecycleTests` |
-| J | Concurrent allocations cannot over-allocate; unique numbers | `test_concurrency` (runs on PostgreSQL only — CI) |
+| J | Concurrent allocations cannot over-allocate; unique numbers | `test_concurrency` (skipped unless `DATABASE_URL` is PostgreSQL) |
 | K | Payment date changes interest base; separate line; no interest-on-interest; no double-charging; compliance ceiling | `tests.InterestTests` |
 | L | Bill register / collection sheet / statement / advance register tie out | `test_reports.ReportTieOutTests` |
 | M | Auditor cannot POST; operator cannot bypass approval via URL; society isolation | `test_security.SecurityTests` |
-| N | Migrations on empty PostgreSQL, seed loads, no duplicate numbers | CI `migrate` + `seed_demo --with-activity` steps; `tests.NumberingTests` |
+| N | Migrations on empty PostgreSQL, seed loads, no duplicate numbers | `migrate` + `seed_demo --with-activity` on an empty database; `tests.NumberingTests` |
 
 ## Role matrix (enforced in `society/permissions.py`)
 
@@ -76,6 +76,8 @@ only and is never saved.
 
 ## Known gaps (not blockers for Phase 1)
 
+- No deployment tooling: no Dockerfile, no CI/CD pipeline, no WSGI/static-serving setup. The project
+  runs from a virtualenv with `manage.py runserver`.
 - Historical bill-register / collection-sheet import as financial records (the import framework supports society register and charge rules only).
 - Backdated receipts entered after interest was billed do not retro-adjust that interest; that correction belongs to the future credit-note workflow.
 - PDF bill/receipt generation and immutable document archive.

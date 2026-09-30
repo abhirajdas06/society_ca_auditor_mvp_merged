@@ -5,7 +5,7 @@ from datetime import date
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.paginator import Paginator
-from django.db import connection, transaction
+from django.db import transaction
 from django.db.models import Prefetch, Q
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -105,16 +105,6 @@ def _master_form(request, form_class, title, back, instance=None, action="master
         messages.success(request, f"{title} saved.")
         return redirect(back)
     return render(request, "society/form.html", {"form": form, "title": title, "back_url": reverse(back)})
-
-
-def health(request):
-    """Liveness + database readiness probe for Docker / load balancers."""
-    try:
-        with connection.cursor() as cursor:
-            cursor.execute("SELECT 1")
-        return JsonResponse({"status": "ok", "database": "ok"})
-    except Exception:  # pragma: no cover - exercised only when the DB is down
-        return JsonResponse({"status": "error", "database": "unavailable"}, status=503)
 
 
 @require("view", session_only=True)   # changes the session only, so auditors may switch too

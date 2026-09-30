@@ -68,34 +68,41 @@ The system reports:
 
 `Receipt: 350 received / 350 allocated / 0 advance`
 
-## Quick start
+## Setup
+
+Requirements: Python 3.12+ and (recommended) PostgreSQL 16.
 
 ```bash
 python -m venv .venv
-# activate the venv
+.venv\Scripts\activate          # Windows;  source .venv/bin/activate on macOS/Linux
 pip install -r requirements-dev.txt
-cp .env.example .env            # set SECRET_KEY; point DATABASE_URL at PostgreSQL
+copy .env.example .env           # cp on macOS/Linux, then set SECRET_KEY and DATABASE_URL
 python manage.py migrate
-python manage.py seed_demo --with-activity --second-society   # prints the generated demo password
+python manage.py seed_demo --with-activity --second-society
 python manage.py runserver
 ```
 
-Demo users (one per role): `demo_ca`, `demo_operator`, `demo_admin`, `demo_auditor`. `--second-society`
-adds a second society for the same users, so the portfolio and the society switcher have something to show. Set `DEMO_PASSWORD`
-to choose the password; otherwise a random one is printed. Change demo credentials before any shared use.
+Open http://127.0.0.1:8000/ and sign in as one of the demo users: `demo_ca`, `demo_operator`,
+`demo_admin`, `demo_auditor` (one per role). `seed_demo` prints a generated password — set
+`DEMO_PASSWORD` to choose your own. Change demo credentials before any shared use.
 
-Or with Docker: `docker compose up --build` (PostgreSQL 16 + app on http://localhost:8000).
+Database: put a PostgreSQL URL in `DATABASE_URL`. Leave it out and the app falls back to a local
+SQLite file, which is fine for looking at the UI but does not exercise row locking.
+
+`seed_demo` is idempotent. `--with-activity` adds issued bills, receipts, an advance and a bounced
+cheque; `--second-society` adds a second society so the multi-society views have something to show.
 
 ## Checks
 
 ```bash
-ruff check .
-python manage.py check
+ruff check .                                    # lint
+python manage.py check                          # Django system checks
 python manage.py makemigrations --check --dry-run
-pytest -q
+pytest -q                                       # unit + acceptance tests
 ```
 
-The concurrency tests (`society/test_concurrency.py`) need PostgreSQL and are skipped on SQLite.
+The concurrency tests (`society/test_concurrency.py`) need real row locking, so they are skipped
+unless `DATABASE_URL` points at PostgreSQL.
 
 ## Working across several societies
 
@@ -137,12 +144,14 @@ Draft period → **Generate drafts** (maker) → review/confirm variable lines �
 - `society/compliance.py` — interest-rate ceiling table
 - `society/tests.py`, `society/test_*.py` — acceptance tests (see `docs/IMPLEMENTATION_STATUS.md`)
 - `society/templates/`, `society/static/` — server-rendered UI, vanilla JS allocation grid
-- `.github/workflows/ci.yml` — lint → test → build → staging → UAT → production
-- `docs/DEPLOYMENT.md` — environments, secrets, host setup
 
 ## Production gap list
 
-Before go-live, complete and verify:
+This is a development setup: `runserver` is not a production server, and there is no deployment
+tooling in the repository. Before go-live, complete and verify:
+
+- a real WSGI server, static-file serving and HTTPS termination
+- automated tests and deployment for whichever pipeline you adopt
 
 - production PDF document generation and an immutable issued-document archive
 - PostgreSQL backup/restore drill

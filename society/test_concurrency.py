@@ -1,7 +1,7 @@
 """J. Concurrency: simultaneous allocations cannot over-allocate a receipt or a bill line.
 
 Real row locking needs PostgreSQL (SQLite serialises the whole database and ignores
-select_for_update), so the threaded tests run only on PostgreSQL — which is what CI uses.
+select_for_update), so these threaded tests are skipped unless DATABASE_URL points at PostgreSQL.
 """
 
 import threading
