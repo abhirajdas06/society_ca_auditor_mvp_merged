@@ -144,14 +144,16 @@ Draft period → **Generate drafts** (maker) → review/confirm variable lines �
 - `society/compliance.py` — interest-rate ceiling table
 - `society/tests.py`, `society/test_*.py` — acceptance tests (see `docs/IMPLEMENTATION_STATUS.md`)
 - `society/templates/`, `society/static/` — server-rendered UI, vanilla JS allocation grid
+- `docs/DEPLOYMENT.md` — deploying to a shared Ubuntu host (PostgreSQL + Gunicorn + Nginx)
 
 ## Production gap list
 
-This is a development setup: `runserver` is not a production server, and there is no deployment
-tooling in the repository. Before go-live, complete and verify:
+`runserver` is for development only. To put this on a server, follow `docs/DEPLOYMENT.md`
+(PostgreSQL + Gunicorn + Nginx, alongside other projects on the same host). Before go-live,
+complete and verify:
 
-- a real WSGI server, static-file serving and HTTPS termination
-- automated tests and deployment for whichever pipeline you adopt
+- the hardening checklist at the end of `docs/DEPLOYMENT.md`
+- a backup/restore drill
 
 - production PDF document generation and an immutable issued-document archive
 - PostgreSQL backup/restore drill
